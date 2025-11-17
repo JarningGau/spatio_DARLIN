@@ -1,0 +1,6 @@
+jobs/
+*.egg-info/
+*__pycache__/
+test/*
+!test/*.sh
+!test/*.yaml
