@@ -230,3 +230,6 @@ Replace `<your_config.yaml>` with the path to your configuration file and `<core
 
 
 
+## Additional Resources
+
+For upstream analysis of BMKMANU S3000 spatial transcriptomics data, see the [upstream analysis documentation](doc/BMKS3000_upstream.md).
