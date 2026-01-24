@@ -1,6 +1,5 @@
 import os
 import sys
-from darlinpy.config.amplicon_configs import load_carlin_config_by_locus
 
 templete = sys.argv[1] # {Tigre_2022_v2, Rosa_v2, cCARLIN}, long_primer_set: {Tigre_2022,Rosa,cCARLIN}
 cores = int(sys.argv[2]) # 8
@@ -11,18 +10,30 @@ base_quality = int(sys.argv[6]) if len(sys.argv) > 6 else 0
 
 primer_len = 15
 
+PRIMERS = {
+    "CA" : {
+        "5prime": "AGCTGTACAAGTAAGCGGC",
+        "3prime": "AGAATTCTAACTAGAGCTCGCTGATCAGCCTCGACTGTGCCTTCT"
+    },
+    "RA" : {
+        "5prime":"GTACAAGTAAAGCGGCC",
+        "3prime":"GTCTGCTGTGTGCCTTCTAGTT"
+    },
+    "TA" : {
+        "5prime": "TCGGTACCTCGCGAA",
+        "3prime": "GTCTTGTCGGTGCCTTCTAGTT"
+    }
+}
+
 if templete.startswith('cCARLIN'):
-    CONFIG_AMPLICON = load_carlin_config_by_locus(locus='Col1a1')
-    prime3 = CONFIG_AMPLICON.sequence.primer3
-    prime5 = CONFIG_AMPLICON.sequence.primer5
+    prime3 = PRIMERS['CA']['3prime']
+    prime5 = PRIMERS['CA']['5prime']
 elif templete.startswith('Rosa'):
-    CONFIG_AMPLICON = load_carlin_config_by_locus(locus='Rosa')
-    prime3 = CONFIG_AMPLICON.sequence.primer3
-    prime5 = CONFIG_AMPLICON.sequence.primer5
+    prime3 = PRIMERS['RA']['3prime']
+    prime5 = PRIMERS['RA']['5prime']
 elif templete.startswith('Tigre'):
-    CONFIG_AMPLICON = load_carlin_config_by_locus(locus='Tigre')
-    prime3 = CONFIG_AMPLICON.sequence.primer3
-    prime5 = CONFIG_AMPLICON.sequence.primer5
+    prime3 = PRIMERS['TA']['3prime']
+    prime5 = PRIMERS['TA']['5prime']
 
 prime3 = prime3[:primer_len] if len(prime3) > primer_len else prime3
 prime5 = prime5[-primer_len:] if len(prime5) > primer_len else prime5

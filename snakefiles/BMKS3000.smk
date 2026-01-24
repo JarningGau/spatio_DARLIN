@@ -1,20 +1,10 @@
 import os
-from darlin import help_functions as hf
-from darlin.settings import script_dir, CARLIN_dir, QC_dir
-#configfile: "config.yaml"  # command line way to set it: --configfile 'path/to/config'
-#workdir: config['data_dir'] # set working directory, a command-line way to set it: --directory 'path/to/your/dir'
-# config['data_dir']=str(os.getcwd())
+from darlin.settings import script_dir, QC_dir
 
 ##################
 ## parameters
 ##################
-cfg_type='sc10xV3'
 template=config['template']
-base_quality_cutoff=config['cutadapt']['base_quality_cutoff']
-cutadapt_cores=config['cutadapt']['cores']
-
-CARLIN_dir=hf.update_CARLIN_dir(CARLIN_dir, config['template'])
-print("Updated CARLIN_dir:"+ str(CARLIN_dir))
 
 if template.startswith('cCARLIN'):
     locus = 'CA'
@@ -23,21 +13,23 @@ elif template.startswith('Rosa'):
 elif template.startswith('Tigre'):
     locus = 'TA'
 else:
-    raise ValueError(f"The template {template} is not supported, please use one of the following: cCARLIN, Rosa_v2, Tigre_2022_v2.")
+    raise ValueError(f"The template {template} is not supported, please use one of the following: cCARLIN, Rosa, Tigre.")
 
+## IO
 SampleList=config['SampleList']
 raw_fastq_dir = config['raw_fastq_dir']
 image_dir = config['image_dir']
 segmentation_dir = config['segmentation_dir']
-kernel=config['python_DARLIN_pipeline']['kernel']
-reads_cutoff_denoise=config['python_DARLIN_pipeline']['reads_cutoff_denoise']
-distance_relative_threshold=config['python_DARLIN_pipeline']['distance_relative_threshold']
-distance_absolute_threshold=config['python_DARLIN_pipeline']['distance_absolute_threshold']
-slope_threshold=config['python_DARLIN_pipeline']['slope_threshold']
-min_reads_per_allele_group=config['python_DARLIN_pipeline']['min_reads_per_allele_group']
-perc_reads_per_allele_group=config['python_DARLIN_pipeline']['perc_reads_per_allele_group']
-read_fraction_per_clone_spot_cutoff=config['python_DARLIN_pipeline']['read_fraction_per_clone_spot_cutoff']
-
+## BSTMatrix parameters
+BSTMatrix_threads=config['BSTMatrix']['threads']
+## Cutadapt parameters
+base_quality_cutoff=config['cutadapt']['base_quality_cutoff']
+cutadapt_threads=config['cutadapt']['threads']
+## QC parameters
+LB_error_rate=config['QC']['LB_error_rate']
+major_fraction_threshold_molecule=config['QC']['major_fraction_threshold_molecule']
+reads_cutoff=config['QC']['reads_cutoff']
+slope_cutoff=config['QC']['slope_cutoff']
 
 ##################
 ## helper functions
@@ -63,17 +55,15 @@ rule all:
     input:
         expand("outs/{sample}_{locus}/all.done", sample=SampleList, locus=locus)
 
-rule extract_DARLIN_seq:
+rule extract_DARLIN_barcodes:
     input:
         r1=lambda wildcards: get_fastq_file(wildcards, "R1"),
         r2=lambda wildcards: get_fastq_file(wildcards, "R2")
     output:
         r1="cutadapt/{sample}_{locus}_R1.trimmed.fastq.gz",
         r2="cutadapt/{sample}_{locus}_R2.trimmed.fastq.gz"
-    conda:
-        kernel
     shell:
-        "python {script_dir}/run_cutadapt.py {template} {cutadapt_cores} {raw_fastq_dir} ./ {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
+        "python {script_dir}/run_cutadapt.py {template} {cutadapt_threads} {raw_fastq_dir} ./ {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
 
 rule write_BMK_config:
     input:
@@ -82,9 +72,9 @@ rule write_BMK_config:
     output:
         config="BST_config/{sample}_{locus}.config.txt"
     shell:
-        "python {script_dir}/write_BMK_config.py {wildcards.sample} {wildcards.locus} {image_dir}"
+        "python {script_dir}/write_BMK_config.py {wildcards.sample} {wildcards.locus} {image_dir} {BSTMatrix_threads}"
 
-rule extract_spatial_barcode:
+rule extract_spatial_barcodes:
     input:
         config="BST_config/{sample}_{locus}.config.txt"
     output:
@@ -95,7 +85,7 @@ rule extract_spatial_barcode:
     shell:
         "BSTMatrix -c {input.config} -s 1"
 
-rule run_DARLIN_pipeline:
+rule run_DARLIN_QC:
     input:
         select_id="BST_output/{sample}_{locus}/01.fastq2BcUmi/out.select_id",
         parsed_barcodes="BST_output/{sample}_{locus}/01.fastq2BcUmi/out.bc_umi_read.tsv.id",
@@ -106,64 +96,28 @@ rule run_DARLIN_pipeline:
         umi2gene='BST_output/{sample}_{locus}/02.Umi2Gene/out.umi_gene.tsv',
         notebook="BST_output/{sample}_{locus}/QC_BMKS3000.ipynb"
     shell:
-        "papermill {QC_dir}/BMKS3000.ipynb -k {kernel} {output.notebook} "
+        "papermill {QC_dir}/BMKS3000.ipynb {output.notebook} "
+        "-p sample {wildcards.sample} "
         "-p select_id_file {input.select_id} "
         "-p parsed_barcodes_file {input.parsed_barcodes} "
-        "-p features_file {output.feat} "
-        "-p umi2gene_file {output.umi2gene} "
         "-p darlin_reads {input.r2} "
-        "-p sample {wildcards.sample} "
-        "-p output_dir {output.BST_output} "
-        "-p reads_cutoff_denoise {reads_cutoff_denoise} "
-        "-p distance_relative_threshold {distance_relative_threshold} "
-        "-p distance_absolute_threshold {distance_absolute_threshold} "
-        "-p slope_threshold {slope_threshold} "
-        "-p min_reads_per_allele_group {min_reads_per_allele_group} "
-        "-p perc_reads_per_allele_group {perc_reads_per_allele_group} "
-        "-p read_fraction_per_clone_spot_cutoff {read_fraction_per_clone_spot_cutoff} "
+        "-p umi2gene_file {output.umi2gene} "
+        "-p features_file {output.feat} "
+        "-p LB_error_rate {LB_error_rate} "
+        "-p major_fraction_threshold_molecule {major_fraction_threshold_molecule} "
+        "-p reads_cutoff {reads_cutoff} "
+        "-p slope_cutoff {slope_cutoff} "
 
-
-rule prepare_MATLAB_input:
+rule call_allele:
     input:
         feat='BST_output/{sample}_{locus}/02.Umi2Gene/features.tsv'
     output:
-        r1="slim_fastq/{sample}_{locus}_R1.fastq.gz",
-        r2="slim_fastq/{sample}_{locus}_R2.fastq.gz"
+        feat_allele = 'BST_output/{sample}_{locus}/02.Umi2Gene/features_allele.tsv',
+        feat_annot = 'BST_output/{sample}_{locus}/02.Umi2Gene/features_annotation.tsv'
+    params:
+        min_bc_len = 20
     shell:
-        "python {script_dir}/prepare_matlab_input_BMKS3000.py {wildcards.sample} {wildcards.locus} "
-        "--called-bc-file {input.feat} "
-        "--r1-file {output.r1} "
-        "--r2-file {output.r2} "
-        "--whitelist {CARLIN_dir}/cfg/10xV3_barcodes.txt.gz"
-
-rule allele_calling:
-    input:
-        r1="slim_fastq/{sample}_{locus}_R1.fastq.gz",
-        r2="slim_fastq/{sample}_{locus}_R2.fastq.gz"
-    output:
-        seq="DARLIN/"+config['template']+"_cutoff_override_1/{sample}_{locus}/Actaul_CARLIN_seq.txt",
-        anno="DARLIN/"+config['template']+"_cutoff_override_1/{sample}_{locus}/AlleleAnnotations.txt"
-    shell:
-        """
-        read_cutoff_UMI_override=1
-        read_cutoff_CB_override=1
-        input_dir=$(pwd)/slim_fastq/
-        output_dir_path=$(pwd)/DARLIN/{template}_cutoff_override_1
-        mkdir -p $output_dir_path/{wildcards.sample}_{wildcards.locus}
-        bash {script_dir}/run_CARLIN.sh {CARLIN_dir} $input_dir $output_dir_path {wildcards.sample}_{wildcards.locus} {cfg_type} {template} $read_cutoff_UMI_override $read_cutoff_CB_override
-        """
-
-rule update_features:
-    input:
-        seq="DARLIN/"+config['template']+"_cutoff_override_1/{sample}_{locus}/Actaul_CARLIN_seq.txt",
-        anno="DARLIN/"+config['template']+"_cutoff_override_1/{sample}_{locus}/AlleleAnnotations.txt",
-        feat='BST_output/{sample}_{locus}/02.Umi2Gene/features.tsv',
-    output:
-        feat='BST_output/{sample}_{locus}/02.Umi2Gene/features_allele.tsv',
-        done='BST_output/{sample}_{locus}/update_features.done'
-    shell:
-        "python {script_dir}/update_features_BMKS3000.py {input.seq} {input.anno} {input.feat} {output.feat} && "
-        "touch {output.done}"
+        "python {script_dir}/annotate_allele.py {locus} {params.min_bc_len} {input.feat} {output.feat_allele} {output.feat_annot}"
 
 rule generate_level_matrix:
     input:
@@ -199,7 +153,7 @@ rule group_spots_to_cells:
         "cp {input.pos} {output.mtx} && "
         "touch {output.done}"
 
-rule collect_data:
+rule collect_BST_output:
     input:
         group_spots_to_cells_done = 'BST_output/{sample}_{locus}/group_spots_to_cells.done',
         generate_matrix_done='BST_output/{sample}_{locus}/generate_matrix.done',

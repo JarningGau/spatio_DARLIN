@@ -7,7 +7,7 @@ The preprocessing pipeline includes:
 - Spatial barcode parsing
 - Allele annotation
 - Grouping spots into segmented cells
-- Generating final clone-by-spots and clone-by-segmented-cells matrices
+- Generating final clone-by-spots and clone-by-cells matrices
 
 ## Requirements
 
@@ -16,6 +16,9 @@ The preprocessing pipeline includes:
 - **Python 3.9**
 - **Snakemake 7.24.0**
 - **BSTMatrix** (quantification pipeline for BMKMANU S3000)
+
+**Update:** We provided alternative choice for allele annotation when matlab is unaccessible.
+Details in [darlinpy](https://github.com/JarningGau/darlinpy/).
 
 ## Installation
 
@@ -32,7 +35,7 @@ conda env create -n BST-env -f environment.yaml
 export PATH=/path/to/tools/BSTMatrix_v2.4.f.1:$PATH
 ```
 
-### 2. Create a conda environment
+### 2. Create a conda environment for spatio_darlin
 
 ```bash
 kernel_name='spatio_darlin'
@@ -44,28 +47,23 @@ pip install numpy==1.24.4
 python -m ipykernel install --user --name=$kernel_name
 ```
 
-### 3. Install required Python packages and MATLAB code
-
-Install the following dependencies in your desired code directory:
-
 ```bash
 code_directory='.' # change it to the directory where you want to put the packages
 cd $code_directory
 
-# Install spatio_DARLIN (this repository)
+# Install darlin (this repository)
 # If you haven't already cloned this repo, run:
-# git clone https://github.com/JarningGau/spatio_DARLIN --depth=1
+git clone https://github.com/JarningGau/spatio_DARLIN --depth=1
 cd spatio_DARLIN  # or navigate to where you cloned this repository
 python setup.py develop
 cd ..
+```
 
-# Install MosaicLineage
-pip install cospar toolz  # dependencies for MosaicLineage
-git clone https://github.com/ShouWenWang-Lab/MosaicLineage --depth=1
-cd MosaicLineage
-python setup.py develop
-cd ..
+### 3. Install MATLAB code
 
+Install the following dependencies in your desired code directory:
+
+```bash
 # Download MATLAB code Custom_CARLIN for allele annotation
 mkdir -p CARLIN_pipeline
 cd CARLIN_pipeline
@@ -73,7 +71,12 @@ git clone https://github.com/ShouWenWang-Lab/Custom_CARLIN --depth=1
 cd ..
 ```
 
-**Note:** Ensure MATLAB is installed and available in your command line interface (accessible via `matlab` command).
+**Note:** 
+1. Ensure MATLAB is installed and available in your command line interface (accessible via `matlab` command).
+2. If matlab is unaccessiable, darlinpy is alternative choice for allele calling.
+```bash
+pip install git+https://github.com/JarningGau/darlinpy.git
+```
 
 ## Usage
 
@@ -90,6 +93,9 @@ bash download_bmk.sh
 This will download the test data. After downloading, you can run the test pipeline:
 
 ```bash
+# if matlab is accessible
+bash test_bmk_matlab.sh 
+# else
 bash test_bmk.sh
 ```
 
@@ -103,19 +109,19 @@ data/BMKS3000/
 │   ├── <sample>_<locus>_R1.fastq.gz
 │   └── <sample>_<locus>_R2.fastq.gz
 ├── images/                   # Image files for BSTMatrix pipeline
-│   ├── <sample>_FL.tif
-│   ├── <sample>_HE.tif
-│   └── <sample>_HE.txt
-└── segmentation/            # Cell segmentation results from BSTMatrix
+│   ├── <sample>_FL.tif       # ssDNA, not neccessary when segmentation results are provided.
+│   ├── <sample>_HE.tif       # HE
+│   └── <sample>_HE.txt       # Encoding positions of spatial barcodes
+└── segmentation/             # Cell segmentation results from BSTMatrix
     └── <sample>/
-        ├── all_barcode_num.txt      # Spots -> cellbin relationship
+        ├── all_barcode_num.txt      # Spots -> cellbin relationship, obtained when perform spatial mRNA-seq data preprocessing.
         └── barcodes_pos.tsv.gz      # Spatial barcode positions
 ```
 
 **Input file descriptions:**
 - **FASTQ files**: Paired-end sequencing reads. Naming convention: `<sample>_<locus>_R1.fastq.gz` and `<sample>_<locus>_R2.fastq.gz`, where `<locus>` can be `CA`, `RA`, or `TA`.
 - **Image files**: Required for BSTMatrix pipeline
-  - `<sample>_FL.tif`: Fluorescence image
+  - `<sample>_FL.tif`: Fluorescence image (ssDNA)
   - `<sample>_HE.tif`: H&E stained image
   - `<sample>_HE.txt`: Image metadata
 - **Segmentation files**: Generated from BSTMatrix on mRNA data
@@ -140,46 +146,30 @@ Below is an example configuration file with explanations:
 ```yaml
 # Sample list to process
 SampleList: ['L0927_Brain']
-
 # Template type: 'Tigre_2022_v2' (TA), 'Rosa_v2' (RA), or 'cCARLIN' (CA)
 template: 'cCARLIN'
-
 # Directory paths (relative to the config file location)
 raw_fastq_dir: '../data/BMKS3000/fastq'
 image_dir: '../data/BMKS3000/images'
 segmentation_dir: '../data/BMKS3000/segmentation'
-
-# Cutadapt parameters for quality filtering
+# Cutadapt parameters
 cutadapt:
-    base_quality_cutoff: 10
-    cores: 8
-
-# Python DARLIN pipeline parameters
-python_DARLIN_pipeline:
-    # [Sequences level] Drop sequences with fewer supported reads (sequencing error filtering)
-    # This is an important parameter for quality control
-    reads_cutoff_denoise: 4
-    
-    # [Lineage barcode level] Denoise lineage barcode (amplification error correction)
-    # Relative threshold: 0.05 for 5% error rate, will be multiplied by sequence length
-    # Set to None to disable relative threshold
-    distance_relative_threshold: None
-    distance_absolute_threshold: 1
-    
-    # [Spots level] Drop spots with read_counts < slope_threshold * umi_counts (suspicious spots)
-    slope_threshold: 2
-    
-    # [Spots level] Drop spots without dominant clone (lineage barcode / mRNA diffusion filtering)
-    read_fraction_per_clone_spot_cutoff: 0.2
-    
-    # [Spots level] Drop spots with fewer supported reads within each lineage barcode group
-    # The reads_cutoff is determined by: 
-    # np.max([min_reads_per_allele_group, perc_reads_per_allele_group * df['read'].max()])
-    min_reads_per_allele_group: 4  # Only works when >= reads_cutoff_denoise
-    perc_reads_per_allele_group: 0.01
-    
-    # Jupyter kernel name
-    kernel: 'spatio_darlin'
+  base_quality_cutoff: 10
+  threads: 8
+# BSTMatrix parameters
+BSTMatrix:
+  threads: 8
+# QC parameters
+QC:
+  ## Step1. Correct sequencing error (errorous nucleotides)
+  LB_error_rate: 0.02
+  ## Step2. Remove amplification artifacts (chimeric molecules)
+  major_fraction_threshold_molecule: 0.8
+  ## Step3. Remove capture-oligo carryover artifacts (fake spots)
+  ## (SR) spots with k = reads/UMIs >= this value
+  slope_cutoff: 10
+  ## (SR+UR+LR) molecules with supported reads >= this value
+  reads_cutoff: 10
 ```
 
 ### Output Files
