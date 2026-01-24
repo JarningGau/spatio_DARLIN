@@ -215,7 +215,7 @@ To run the pipeline with your own data:
 
 ```bash
 conda activate $kernel_name
-snakemake --snakefile snakefiles/snakefile_DARLIN_BMKS3000.py --configfile <your_config.yaml> -c <cores>
+snakemake --snakefile snakefiles/BMKS3000.smk --configfile <your_config.yaml> -c <cores>
 ```
 
 Replace `<your_config.yaml>` with the path to your configuration file and `<cores>` with the number of CPU cores to use.

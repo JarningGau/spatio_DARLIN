@@ -7,8 +7,6 @@ from darlin.settings import script_dir, CARLIN_dir, QC_dir
 ##################
 cfg_type='sc10xV3'
 template=config['template']
-base_quality_cutoff=config['cutadapt']['base_quality_cutoff']
-cutadapt_cores=config['cutadapt']['cores']
 
 CARLIN_dir=hf.update_CARLIN_dir(CARLIN_dir, config['template'])
 print("Updated CARLIN_dir:"+ str(CARLIN_dir))
@@ -69,10 +67,8 @@ rule extract_DARLIN_barcodes:
     output:
         r1="cutadapt/{sample}_{locus}_R1.trimmed.fastq.gz",
         r2="cutadapt/{sample}_{locus}_R2.trimmed.fastq.gz"
-    conda:
-        kernel
     shell:
-        "python {script_dir}/run_cutadapt.py {template} {cutadapt_cores} {raw_fastq_dir} ./ {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
+        "python {script_dir}/run_cutadapt.py {template} {cutadapt_threads} {raw_fastq_dir} ./ {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
 
 rule write_BMK_config:
     input:
