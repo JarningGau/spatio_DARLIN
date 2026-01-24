@@ -215,6 +215,9 @@ To run the pipeline with your own data:
 
 ```bash
 conda activate $kernel_name
+## When matlab is avaliable
+snakemake --snakefile snakefiles/BMKS3000_matlab.smk --configfile <your_config.yaml> -c <cores>
+## Otherwise
 snakemake --snakefile snakefiles/BMKS3000.smk --configfile <your_config.yaml> -c <cores>
 ```
 
