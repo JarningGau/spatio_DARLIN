@@ -1,6 +1,8 @@
 jobs/
 *.egg-info/
 *__pycache__/
-test/*
-!test/*.sh
-!test/*.yaml
+test/data/*
+test/test_BMKS3000/*
+!test/test_BMKS3000/config-*.yaml
+!test/test_BMKS3000/test*.sh
+
