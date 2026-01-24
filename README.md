@@ -26,13 +26,15 @@ Details in [darlinpy](https://github.com/JarningGau/darlinpy/).
 
 ```bash
 cd /path/to/tools
-wget http://www.bmkmanu.com/wp-content/uploads/2024/07/BSTMatrix_v2.4.f.1.zip
-unzip BSTMatrix_v2.4.f.1.zip
+# wget http://www.bmkmanu.com/wp-content/uploads/2024/07/BSTMatrix_v2.4.f.1.zip
+## download latest version
+wget http://www.bmkmanu.com/wp-content/uploads/2025/09/BSTMatrix_v2.4.f.4_release_20250902.zip -O BSTMatrix.zip
+unzip BSTMatrix.zip
 ## conda env for BSTMatrix
-cd BSTMatrix_v2.4.f.1
+cd BSTMatrix
 conda env create -n BST-env -f environment.yaml
 
-export PATH=/path/to/tools/BSTMatrix_v2.4.f.1:$PATH
+export PATH=/path/to/tools/BSTMatrix:$PATH
 ```
 
 ### 2. Create a conda environment for spatio_darlin
