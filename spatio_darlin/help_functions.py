@@ -1,4 +1,3 @@
-import os
 import gzip
 
 
@@ -82,42 +81,3 @@ def iter_fastq_paired(handle1, handle2):
             raise ValueError(f"Length mismatch (seq {len(seq2)} vs qual {len(qual2)}) at read {read_id2} in file 2")
 
         yield read_id1, seq1, qual1, read_id2, seq2, qual2
-
-def update_CARLIN_dir(CARLIN_root_folder, template):
-    if template == "cCARLIN":
-        os.system(
-            f"rsync -avP '{CARLIN_root_folder}/Custom_CARLIN/' '{CARLIN_root_folder}/cCARLIN'"
-        )
-        # os.system(f"cp {CARLIN_root_folder}/cDARLIN/@CARLIN_def/CARLIN_def_cCARLIN.m {CARLIN_root_folder}/cDARLIN/@CARLIN_def/CARLIN_def.m")
-        Actual_CARLIN_dir = f"{CARLIN_root_folder}/cCARLIN"
-    elif template == "Tigre":
-        os.system(
-            f"rsync -avP '{CARLIN_root_folder}/Custom_CARLIN/' '{CARLIN_root_folder}/Tigre_CARLIN'"
-        )
-        Actual_CARLIN_dir = f"{CARLIN_root_folder}/Tigre_CARLIN"
-    elif template == "Tigre_2022":
-        os.system(
-            f"rsync -avP '{CARLIN_root_folder}/Custom_CARLIN/' '{CARLIN_root_folder}/Tigre_CARLIN_2022'"
-        )
-        Actual_CARLIN_dir = f"{CARLIN_root_folder}/Tigre_CARLIN_2022"
-    elif template == "Tigre_2022_v2":
-        os.system(
-            f"rsync -avP '{CARLIN_root_folder}/Custom_CARLIN/' '{CARLIN_root_folder}/Tigre_CARLIN_2022_v2'"
-        )
-        Actual_CARLIN_dir = f"{CARLIN_root_folder}/Tigre_CARLIN_2022_v2"
-    elif template == "Rosa":
-        os.system(
-            f"rsync -avP '{CARLIN_root_folder}/Custom_CARLIN/' '{CARLIN_root_folder}/Rosa_CARLIN'"
-        )
-        Actual_CARLIN_dir = f"{CARLIN_root_folder}/Rosa_CARLIN"
-    elif template == "Rosa_v2":
-        os.system(
-            f"rsync -avP '{CARLIN_root_folder}/Custom_CARLIN/' '{CARLIN_root_folder}/Rosa_CARLIN_v2'"
-        )
-        Actual_CARLIN_dir = f"{CARLIN_root_folder}/Rosa_CARLIN_v2"
-    else:
-        raise ValueError(
-            "The input template should be among {Rosa, Tigre_2022, Tigre, cCARLIN, Rosa_v2, Tigre_2022_v2}"
-        )
-    return os.path.abspath(Actual_CARLIN_dir)
-

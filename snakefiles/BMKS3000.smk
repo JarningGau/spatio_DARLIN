@@ -1,5 +1,5 @@
 import os
-from darlin.settings import script_dir, QC_dir
+from spatio_darlin.settings import script_dir, QC_dir
 
 ##################
 ## parameters

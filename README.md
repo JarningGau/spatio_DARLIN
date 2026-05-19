@@ -5,20 +5,17 @@ This is a Snakemake pipeline for automated preprocessing of spatial lineage trac
 The preprocessing pipeline includes:
 - Lineage barcode identification and quality control
 - Spatial barcode parsing
-- Allele annotation
+- Allele annotation ([darlin-core](https://github.com/JarningGau/darlin-core))
 - Grouping spots into segmented cells
 - Generating final clone-by-spots and clone-by-cells matrices
 
 ## Requirements
 
 - **Conda** (for environment management)
-- **MATLAB** (must be available in command line interface)
-- **Python 3.9**
+- **Python 3.9+**
 - **Snakemake 7.24.0**
 - **BSTMatrix** (quantification pipeline for BMKMANU S3000)
-
-**Update:** We provided alternative choice for allele annotation when matlab is unaccessible.
-Details in [darlinpy](https://github.com/JarningGau/darlinpy/).
+- **[darlin-core](https://github.com/JarningGau/darlin-core)** (GitHub only; allele annotation and cutadapt primers)
 
 ## Installation
 
@@ -53,32 +50,22 @@ python -m ipykernel install --user --name=$kernel_name
 code_directory='.' # change it to the directory where you want to put the packages
 cd $code_directory
 
-# Install darlin (this repository)
+# darlin-core is not on PyPI; install from GitHub first
+pip install git+https://github.com/JarningGau/darlin-core.git
+
+# Install spatio_darlin (this repository)
 # If you haven't already cloned this repo, run:
 git clone https://github.com/JarningGau/spatio_DARLIN --depth=1
 cd spatio_DARLIN  # or navigate to where you cloned this repository
-python setup.py develop
+pip install -e .
 cd ..
 ```
 
-### 3. Install MATLAB code
+`pip install -e .` will also attempt to install **darlin-core** from GitHub via `setup.py`. If that fails, install it explicitly with the `pip install git+...` command above (or clone the repo and use `pip install -e /path/to/darlin-core`).
 
-Install the following dependencies in your desired code directory:
+### Legacy MATLAB workflow (optional)
 
-```bash
-# Download MATLAB code Custom_CARLIN for allele annotation
-mkdir -p CARLIN_pipeline
-cd CARLIN_pipeline
-git clone https://github.com/ShouWenWang-Lab/Custom_CARLIN --depth=1
-cd ..
-```
-
-**Note:** 
-1. Ensure MATLAB is installed and available in your command line interface (accessible via `matlab` command).
-2. If matlab is unaccessiable, darlinpy is alternative choice for allele calling.
-```bash
-pip install git+https://github.com/JarningGau/darlinpy.git
-```
+The pre-1.0 MATLAB allele-calling path is deprecated and lives under [legacy/matlab/](legacy/matlab/). It requires MATLAB and [Custom_CARLIN](https://github.com/ShouWenWang-Lab/Custom_CARLIN). See [legacy/matlab/README.md](legacy/matlab/README.md).
 
 ## Usage
 
@@ -92,12 +79,10 @@ cd test
 bash download_bmk.sh
 ```
 
-This will download the test data. After downloading, you can run the test pipeline:
+This will download the test data. After downloading, run the test pipeline:
 
 ```bash
-# if matlab is accessible
-bash test_bmk_matlab.sh 
-# else
+cd test_BMKS3000
 bash test_bmk.sh
 ```
 
@@ -184,9 +169,7 @@ test_BMKS3000/
 ├── BST_output/      # Outputs from BSTMatrix
 ├── config-*.yaml    # Input configs (CA/RA/TA)
 ├── cutadapt/        # Primer-trimmed FASTQs: reads1, spatial barcode + UMI; reads2, lineage barcode
-├── DARLIN/          # Intermediate DARLIN pipeline products
-├── outs/            # Aggregated results
-└── slim_fastq/      # FASTQs for allele annotation
+└── outs/            # Aggregated results
 ```
 
 The final results live in `test_BMKS3000/outs/`:
@@ -215,16 +198,12 @@ To run the pipeline with your own data:
 
 ```bash
 conda activate $kernel_name
-## When matlab is avaliable
-snakemake --snakefile snakefiles/BMKS3000_matlab.smk --configfile <your_config.yaml> -c <cores>
-## Otherwise
-snakemake --snakefile snakefiles/BMKS3000.smk --configfile <your_config.yaml> -c <cores>
+snakemake --snakefile snakefiles/BMKS3000.smk --configfile <your_config.yaml> -c <cores> --use-conda
 ```
 
 Replace `<your_config.yaml>` with the path to your configuration file and `<cores>` with the number of CPU cores to use.
 
-
-
 ## Additional Resources
 
-For upstream analysis of BMKMANU S3000 spatial transcriptomics data, see the [upstream analysis documentation](doc/BMKS3000_upstream.md).
+- [Changelog](doc/CHANGELOG.md)
+- Upstream analysis of BMKMANU S3000 spatial transcriptomics data: [doc/BMKS3000_upstream.md](doc/BMKS3000_upstream.md)

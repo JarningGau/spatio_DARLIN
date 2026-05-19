@@ -1,5 +1,5 @@
 import pandas as pd
-from darlinpy import analyze_sequences
+from darlin_core import analyze_sequences
 import sys
 
 locus = sys.argv[1] # CA,TA,RA

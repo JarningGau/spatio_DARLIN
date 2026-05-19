@@ -1,6 +1,6 @@
 import os
 import sys
-from darlinpy.config.amplicon_configs import load_carlin_config_by_locus
+from darlin_core.config.amplicon_configs import load_carlin_config_by_locus
 
 templete = sys.argv[1] # {Tigre_2022_v2, Rosa_v2, cCARLIN}, long_primer_set: {Tigre_2022,Rosa,cCARLIN}
 cores = int(sys.argv[2]) # 8

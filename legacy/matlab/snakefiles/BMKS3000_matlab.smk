@@ -1,6 +1,11 @@
 import os
-from darlin import help_functions as hf
-from darlin.settings import script_dir, CARLIN_dir, QC_dir
+import sys
+
+_legacy_matlab_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+sys.path.insert(0, _legacy_matlab_dir)
+
+from spatio_darlin import help_functions as hf
+from spatio_darlin.settings import script_dir, CARLIN_dir, QC_dir
 
 ##################
 ## parameters
@@ -68,7 +73,7 @@ rule extract_DARLIN_barcodes:
         r1="cutadapt/{sample}_{locus}_R1.trimmed.fastq.gz",
         r2="cutadapt/{sample}_{locus}_R2.trimmed.fastq.gz"
     shell:
-        "python {script_dir}/run_cutadapt.py {template} {cutadapt_threads} {raw_fastq_dir} ./ {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
+        "python {script_dir}/run_cutadapt_matlab.py {template} {cutadapt_threads} {raw_fastq_dir} ./ {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
 
 rule write_BMK_config:
     input:
