@@ -20,6 +20,7 @@ SampleList=config['SampleList']
 raw_fastq_dir = config['raw_fastq_dir']
 image_dir = config['image_dir']
 segmentation_dir = config['segmentation_dir']
+outdir = config.get('outdir', '.').rstrip('/')
 ## BSTMatrix parameters
 BSTMatrix_threads=config['BSTMatrix']['threads']
 ## Cutadapt parameters
@@ -34,6 +35,9 @@ slope_cutoff=config['QC']['slope_cutoff']
 ##################
 ## helper functions
 ##################
+def o(*parts):
+    return os.path.join(outdir, *parts) if outdir != '.' else os.path.join(*parts)
+
 def get_fastq_file(wildcards, read_end):
     """Get fastq file path, supporting both .fq.gz and .fastq.gz extensions."""
     base_path = f"{raw_fastq_dir}/{wildcards.sample}_{wildcards.locus}_{read_end}"
@@ -53,33 +57,33 @@ def get_fastq_file(wildcards, read_end):
 ################## 
 rule all:
     input:
-        expand("outs/{sample}_{locus}/all.done", sample=SampleList, locus=locus)
+        expand(o("outs", "{sample}_{locus}", "all.done"), sample=SampleList, locus=locus)
 
 rule extract_DARLIN_barcodes:
     input:
         r1=lambda wildcards: get_fastq_file(wildcards, "R1"),
         r2=lambda wildcards: get_fastq_file(wildcards, "R2")
     output:
-        r1="cutadapt/{sample}_{locus}_R1.trimmed.fastq.gz",
-        r2="cutadapt/{sample}_{locus}_R2.trimmed.fastq.gz"
+        r1=o("cutadapt", "{sample}_{locus}_R1.trimmed.fastq.gz"),
+        r2=o("cutadapt", "{sample}_{locus}_R2.trimmed.fastq.gz")
     shell:
-        "python {script_dir}/run_cutadapt.py {template} {cutadapt_threads} {raw_fastq_dir} ./ {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
+        "python {script_dir}/run_cutadapt.py {template} {cutadapt_threads} {raw_fastq_dir} {outdir} {wildcards.sample}_{wildcards.locus} {base_quality_cutoff}"
 
 rule write_BMK_config:
     input:
-        r1="cutadapt/{sample}_{locus}_R1.trimmed.fastq.gz",
-        r2="cutadapt/{sample}_{locus}_R2.trimmed.fastq.gz"
+        r1=o("cutadapt", "{sample}_{locus}_R1.trimmed.fastq.gz"),
+        r2=o("cutadapt", "{sample}_{locus}_R2.trimmed.fastq.gz")
     output:
-        config="BST_config/{sample}_{locus}.config.txt"
+        config=o("BST_config", "{sample}_{locus}.config.txt")
     shell:
-        "python {script_dir}/write_BMK_config.py {wildcards.sample} {wildcards.locus} {image_dir} {BSTMatrix_threads}"
+        "python {script_dir}/write_BMK_config.py {wildcards.sample} {wildcards.locus} {image_dir} {BSTMatrix_threads} {outdir}"
 
 rule extract_spatial_barcodes:
     input:
-        config="BST_config/{sample}_{locus}.config.txt"
+        config=o("BST_config", "{sample}_{locus}.config.txt")
     output:
-        select_id="BST_output/{sample}_{locus}/01.fastq2BcUmi/out.select_id",
-        parsed_barcodes="BST_output/{sample}_{locus}/01.fastq2BcUmi/out.bc_umi_read.tsv.id",
+        select_id=o("BST_output", "{sample}_{locus}", "01.fastq2BcUmi", "out.select_id"),
+        parsed_barcodes=o("BST_output", "{sample}_{locus}", "01.fastq2BcUmi", "out.bc_umi_read.tsv.id"),
     conda:
         "BST-env"
     shell:
@@ -87,14 +91,14 @@ rule extract_spatial_barcodes:
 
 rule run_DARLIN_QC:
     input:
-        select_id="BST_output/{sample}_{locus}/01.fastq2BcUmi/out.select_id",
-        parsed_barcodes="BST_output/{sample}_{locus}/01.fastq2BcUmi/out.bc_umi_read.tsv.id",
-        r2="cutadapt/{sample}_{locus}_R2.trimmed.fastq.gz"
+        select_id=o("BST_output", "{sample}_{locus}", "01.fastq2BcUmi", "out.select_id"),
+        parsed_barcodes=o("BST_output", "{sample}_{locus}", "01.fastq2BcUmi", "out.bc_umi_read.tsv.id"),
+        r2=o("cutadapt", "{sample}_{locus}_R2.trimmed.fastq.gz")
     output:
-        BST_output=directory("BST_output/{sample}_{locus}/02.Umi2Gene"),
-        feat='BST_output/{sample}_{locus}/02.Umi2Gene/features.tsv',
-        umi2gene='BST_output/{sample}_{locus}/02.Umi2Gene/out.umi_gene.tsv',
-        notebook="BST_output/{sample}_{locus}/QC_BMKS3000.ipynb"
+        BST_output=directory(o("BST_output", "{sample}_{locus}", "02.Umi2Gene")),
+        feat=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "features.tsv"),
+        umi2gene=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "out.umi_gene.tsv"),
+        notebook=o("BST_output", "{sample}_{locus}", "QC_BMKS3000.ipynb")
     shell:
         "papermill {QC_dir}/BMKS3000.ipynb {output.notebook} "
         "-p sample {wildcards.sample} "
@@ -110,10 +114,10 @@ rule run_DARLIN_QC:
 
 rule call_allele:
     input:
-        feat='BST_output/{sample}_{locus}/02.Umi2Gene/features.tsv'
+        feat=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "features.tsv")
     output:
-        feat_allele = 'BST_output/{sample}_{locus}/02.Umi2Gene/features_allele.tsv',
-        feat_annot = 'BST_output/{sample}_{locus}/02.Umi2Gene/features_annotation.tsv'
+        feat_allele=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "features_allele.tsv"),
+        feat_annot=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "features_annotation.tsv")
     params:
         min_bc_len = 20
     shell:
@@ -121,12 +125,12 @@ rule call_allele:
 
 rule generate_level_matrix:
     input:
-        config="BST_config/{sample}_{locus}.config.txt",
-        feat='BST_output/{sample}_{locus}/02.Umi2Gene/features.tsv',
-        umi2gene='BST_output/{sample}_{locus}/02.Umi2Gene/out.umi_gene.tsv'
+        config=o("BST_config", "{sample}_{locus}.config.txt"),
+        feat=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "features.tsv"),
+        umi2gene=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "out.umi_gene.tsv")
     output:
-        level_1_mtx_dir=directory('BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_1'),
-        done='BST_output/{sample}_{locus}/generate_matrix.done'
+        level_1_mtx_dir=directory(o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_1")),
+        done=o("BST_output", "{sample}_{locus}", "generate_matrix.done")
     conda:
         "BST-env"
     shell:
@@ -135,16 +139,16 @@ rule generate_level_matrix:
 
 rule group_spots_to_cells:
     input:
-        level_1_mtx_dir='BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_1',
+        level_1_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_1"),
         seg=segmentation_dir+"/{sample}/all_barcode_num.txt",
         pos=segmentation_dir+"/{sample}/barcodes_pos.tsv.gz"
     output:
-        mtx=directory('BST_output/{sample}_{locus}/07.CellSplit'),
-        mtx_pos='BST_output/{sample}_{locus}/07.CellSplit/barcodes_pos.tsv.gz',
-        mtx_mat='BST_output/{sample}_{locus}/07.CellSplit/matrix.mtx.gz',
-        mtx_barcodes='BST_output/{sample}_{locus}/07.CellSplit/barcodes.tsv.gz',
-        mtx_features='BST_output/{sample}_{locus}/07.CellSplit/features.tsv.gz',
-        done='BST_output/{sample}_{locus}/group_spots_to_cells.done'
+        mtx=directory(o("BST_output", "{sample}_{locus}", "07.CellSplit")),
+        mtx_pos=o("BST_output", "{sample}_{locus}", "07.CellSplit", "barcodes_pos.tsv.gz"),
+        mtx_mat=o("BST_output", "{sample}_{locus}", "07.CellSplit", "matrix.mtx.gz"),
+        mtx_barcodes=o("BST_output", "{sample}_{locus}", "07.CellSplit", "barcodes.tsv.gz"),
+        mtx_features=o("BST_output", "{sample}_{locus}", "07.CellSplit", "features.tsv.gz"),
+        done=o("BST_output", "{sample}_{locus}", "group_spots_to_cells.done")
     conda:
         "BST-env"
     shell:
@@ -155,23 +159,23 @@ rule group_spots_to_cells:
 
 rule collect_BST_output:
     input:
-        group_spots_to_cells_done = 'BST_output/{sample}_{locus}/group_spots_to_cells.done',
-        generate_matrix_done='BST_output/{sample}_{locus}/generate_matrix.done',
-        feat = 'BST_output/{sample}_{locus}/02.Umi2Gene/features_allele.tsv'
+        group_spots_to_cells_done=o("BST_output", "{sample}_{locus}", "group_spots_to_cells.done"),
+        generate_matrix_done=o("BST_output", "{sample}_{locus}", "generate_matrix.done"),
+        feat=o("BST_output", "{sample}_{locus}", "02.Umi2Gene", "features_allele.tsv")
     params:
-        level_1_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_1",
-        level_2_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_2",
-        level_3_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_3",
-        level_4_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_4",
-        level_5_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_5",
-        level_6_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_6",
-        level_7_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_7",
-        level_9_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_9",
-        level_18_mtx_dir = "BST_output/{sample}_{locus}/05.AllheStat/level_matrix/level_18",
-        cellbin_mtx_dir = "BST_output/{sample}_{locus}/07.CellSplit"
+        level_1_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_1"),
+        level_2_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_2"),
+        level_3_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_3"),
+        level_4_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_4"),
+        level_5_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_5"),
+        level_6_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_6"),
+        level_7_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_7"),
+        level_9_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_9"),
+        level_18_mtx_dir=o("BST_output", "{sample}_{locus}", "05.AllheStat", "level_matrix", "level_18"),
+        cellbin_mtx_dir=o("BST_output", "{sample}_{locus}", "07.CellSplit")
     output:
-        outs_dir = directory('outs/{sample}_{locus}'),
-        done='outs/{sample}_{locus}/all.done'
+        outs_dir=directory(o("outs", "{sample}_{locus}")),
+        done=o("outs", "{sample}_{locus}", "all.done")
     shell:
         "mkdir -p {output.outs_dir} && "
         "cp -r {params.level_1_mtx_dir} {output.outs_dir}/level_1 && cp {input.feat} {output.outs_dir}/level_1/features_allele.tsv && "

@@ -120,6 +120,7 @@ template: 'cCARLIN'
 raw_fastq_dir: '../data/BMKS3000/fastq'
 image_dir: '../data/BMKS3000/images'
 segmentation_dir: '../data/BMKS3000/segmentation'
+outdir: 'CA'
 # Cutadapt parameters
 cutadapt:
   base_quality_cutoff: 10
@@ -142,21 +143,24 @@ QC:
 
 ### Output Files
 
-After a successful run (using the bundled test configs or your own), the workspace will resemble:
+After a successful run with the bundled test configs (each sets `outdir` to the locus name), the workspace will resemble:
 
 ```text
 test_BMKS3000/
-├── BST_config/      # BSTMatrix configuration files
-├── BST_output/      # Outputs from BSTMatrix
-├── config-*.yaml    # Input configs (CA/RA/TA)
-├── cutadapt/        # Primer-trimmed FASTQs: reads1, spatial barcode + UMI; reads2, lineage barcode
-└── outs/            # Aggregated results
+├── CA/              # CA locus outputs (outdir: CA)
+│   ├── BST_config/
+│   ├── BST_output/
+│   ├── cutadapt/
+│   └── outs/
+├── RA/              # RA locus outputs
+├── TA/              # TA locus outputs
+└── config-*.yaml    # Input configs (CA/RA/TA)
 ```
 
-The final results live in `test_BMKS3000/outs/`:
+The final results live under each `outdir`, e.g. `test_BMKS3000/CA/outs/`:
 
 ```text
-test_BMKS3000/outs/
+test_BMKS3000/CA/outs/
 └── L0927_Brain_CA/
     ├── all.done
     ├── cellbin/        # Cell-bin level matrices

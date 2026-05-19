@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Add `outdir` config option to [snakefiles/BMKS3000.smk](../snakefiles/BMKS3000.smk): all pipeline outputs (`cutadapt/`, `BST_config/`, `BST_output/`, `outs/`) are written under the specified directory (default: `.`).
+
 ## 1.0.0
 
 - Remove MATLAB from the default workflow; legacy MATLAB pipeline under [legacy/matlab/](../legacy/matlab/)

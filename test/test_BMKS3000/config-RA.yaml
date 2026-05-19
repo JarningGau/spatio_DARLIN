@@ -3,6 +3,7 @@ template : 'Rosa_v2' # short_primer_set: {Tigre_2022_v2, Rosa_v2, cCARLIN}, long
 raw_fastq_dir: '../data/BMKS3000/fastq' # relative path to the config file
 image_dir: '../data/BMKS3000/images'
 segmentation_dir: '../data/BMKS3000/segmentation'
+outdir: RA
 cutadapt:
   base_quality_cutoff: 10
   threads: 8

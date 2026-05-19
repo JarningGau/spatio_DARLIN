@@ -5,13 +5,21 @@ sample = sys.argv[1] # 'E14.5_embryo_dox_E10.5'
 locus = sys.argv[2] # 'CA'
 image_path = sys.argv[3] # '../data/BMKS3000/image'
 threads = sys.argv[4]
+outdir = sys.argv[5] if len(sys.argv) > 5 else '.'
+
+def o(*parts):
+    return os.path.join(outdir, *parts) if outdir != '.' else os.path.join(*parts)
+
+bst_output = o("BST_output", f"{sample}_{locus}")
+bst_config_dir = o("BST_config")
+config_path = o("BST_config", f"{sample}_{locus}.config.txt")
 
 # This is the config file for BMK pipeline
 config = f'''
 ### Global parameters
 ## data Data path
-FQ1	cutadapt/{sample}_{locus}_R1.trimmed.fastq.gz
-FQ2	cutadapt/{sample}_{locus}_R2.trimmed.fastq.gz
+FQ1	{o("cutadapt", f"{sample}_{locus}_R1.trimmed.fastq.gz")}
+FQ2	{o("cutadapt", f"{sample}_{locus}_R2.trimmed.fastq.gz")}
 
 ## Flu info file Fluorescence decoding file path
 FLU	{image_path}/{sample}-HE.txt
@@ -35,10 +43,10 @@ FLGRAY	15
 #GenomeVer	xxxx
 # INDEX	/mnt/d/resource/star/mm10-2020-A/
 # GFF		/mnt/d/resource/star/mm10-2020-A/genes.gtf
-FEATURE	./BST_output/{sample}_{locus}/02.Umi2Gene/features.tsv
+FEATURE	{o("BST_output", f"{sample}_{locus}", "02.Umi2Gene", "features.tsv")}
 
 ## output    Output results and output file prefix
-OUTDIR	./BST_output/{sample}_{locus}
+OUTDIR	{bst_output}
 PREFIX	out
 
 ### Local parameters
@@ -55,11 +63,8 @@ BCThreads	{threads}
 ##Rscript	/path/to/Rscript/dir/
 '''
 
-if not os.path.exists('BST_config'):
-    os.makedirs('BST_config')
+os.makedirs(bst_config_dir, exist_ok=True)
+os.makedirs(bst_output, exist_ok=True)
 
-if not os.path.exists(f'./BST_output/{sample}_{locus}'):
-    os.makedirs(f'./BST_output/{sample}_{locus}')
-
-with open(f'BST_config/{sample}_{locus}.config.txt', 'w') as f:
+with open(config_path, 'w') as f:
     f.write(config)
