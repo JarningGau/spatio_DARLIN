@@ -11,11 +11,9 @@ The preprocessing pipeline includes:
 
 ## Requirements
 
-- **Conda** (for environment management)
-- **Python 3.9+**
-- **Snakemake 7.24.0**
-- **BSTMatrix** (quantification pipeline for BMKMANU S3000)
-- **[darlin-core](https://github.com/JarningGau/darlin-core)** (GitHub only; allele annotation and cutadapt primers)
+- **Conda** (recommended; see [environment.yml](environment.yml))
+- **BSTMatrix** (quantification pipeline for BMKMANU S3000; separate `BST-env`)
+- **[darlin-core](https://github.com/JarningGau/darlin-core)** (GitHub only; installed via pip in `environment.yml`)
 
 ## Installation
 
@@ -23,45 +21,28 @@ The preprocessing pipeline includes:
 
 ```bash
 cd /path/to/tools
-# wget http://www.bmkmanu.com/wp-content/uploads/2024/07/BSTMatrix_v2.4.f.1.zip
-## download latest version
 wget http://www.bmkmanu.com/wp-content/uploads/2025/09/BSTMatrix_v2.4.f.4_release_20250902.zip -O BSTMatrix.zip
 unzip BSTMatrix.zip
-## conda env for BSTMatrix
 cd BSTMatrix
 conda env create -n BST-env -f environment.yaml
-
 export PATH=/path/to/tools/BSTMatrix:$PATH
 ```
 
-### 2. Create a conda environment for spatio_darlin
+### 2. Install spatio_darlin
+
+Conda packages cover the Snakemake workflow and QC notebook; pip is used only for **darlin-core** (not on conda) and this repository.
 
 ```bash
+git clone https://github.com/JarningGau/spatio_DARLIN --depth=1
+cd spatio_DARLIN
 kernel_name='spatio_darlin'
 conda create -n $kernel_name python=3.9 --yes
 conda activate $kernel_name
-conda install -c conda-forge -c bioconda snakemake=7.24.0 --yes
-pip install jupyterlab umi_tools seaborn papermill biopython cutadapt
-pip install numpy==1.24.4
-python -m ipykernel install --user --name=$kernel_name
-```
-
-```bash
-code_directory='.' # change it to the directory where you want to put the packages
-cd $code_directory
-
-# darlin-core is not on PyPI; install from GitHub first
-pip install git+https://github.com/JarningGau/darlin-core.git
-
-# Install spatio_darlin (this repository)
-# If you haven't already cloned this repo, run:
-git clone https://github.com/JarningGau/spatio_DARLIN --depth=1
-cd spatio_DARLIN  # or navigate to where you cloned this repository
+conda install snakemake=7.24.0 cutadapt umi_tools --yes
+pip install papermill ipykernel matplotlib tqdm numpy
+pip install "git+https://github.com/JarningGau/darlin-core.git@fe03de6"
 pip install -e .
-cd ..
 ```
-
-`pip install -e .` will also attempt to install **darlin-core** from GitHub via `setup.py`. If that fails, install it explicitly with the `pip install git+...` command above (or clone the repo and use `pip install -e /path/to/darlin-core`).
 
 ### Legacy MATLAB workflow (optional)
 
@@ -197,7 +178,7 @@ To run the pipeline with your own data:
 3. Run Snakemake:
 
 ```bash
-conda activate $kernel_name
+conda activate spatio_darlin
 snakemake --snakefile snakefiles/BMKS3000.smk --configfile <your_config.yaml> -c <cores> --use-conda
 ```
 

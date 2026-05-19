@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=64", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "spatio-darlin"
+version = "1.0.0"
+description = "DARLIN snakemake pipeline for spatial lineage tracing"
+readme = "README.md"
+license = "MIT"
+authors = [
+    {name = "Jarning Gau", email = "gaojianing@westlake.edu.cn"},
+]
+requires-python = ">=3.8"
+
+[tool.setuptools.packages.find]
+where = ["."]
