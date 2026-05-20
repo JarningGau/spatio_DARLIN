@@ -95,7 +95,7 @@ data/BMKS3000/
 - **Image files**: Required for BSTMatrix pipeline
   - `<sample>-FL.tif`: Fluorescence image (ssDNA)
   - `<sample>-HE.tif`: H&E stained image
-  - `<sample>-HE.txt`: Image metadata
+  - `<sample>-HE.txt`: Fluorescence decoding file (for spatial coordinates assignment)
 - **Segmentation files**: Generated from BSTMatrix on mRNA data
   - `all_barcode_num.txt`: Maps spots to cell bins
   - `barcodes_pos.tsv.gz`: Spatial coordinates of cellbin
