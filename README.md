@@ -11,9 +11,13 @@ The preprocessing pipeline includes:
 - Grouping spots into segmented cells
 - Generating final clone-by-spots and clone-by-cells matrices
 
+## Workflow
+
+![](figures/workflow_BMKS3000.png)
+
 ## Requirements
 
-- **Conda** (recommended; see [environment.yml](environment.yml))
+- **Conda**
 - **BSTMatrix** (quantification pipeline for BMKMANU S3000; separate conda env named `BST-env`)
 - **[darlin-core](https://github.com/JarningGau/darlin-core)** (GitHub only; installed via pip)
 
