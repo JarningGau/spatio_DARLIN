@@ -81,9 +81,9 @@ data/BMKS3000/
 │   ├── <sample>_<locus>_R1.fastq.gz
 │   └── <sample>_<locus>_R2.fastq.gz
 ├── images/                   # Image files for BSTMatrix pipeline
-│   ├── <sample>_FL.tif       # ssDNA, not neccessary when segmentation results are provided.
-│   ├── <sample>_HE.tif       # HE
-│   └── <sample>_HE.txt       # Encoding positions of spatial barcodes
+│   ├── <sample>-FL.tif       # ssDNA, not neccessary when segmentation res-lts are provided.
+│   ├── <sample>-HE.tif       # HE
+│   └── <sample>-HE.txt       # Encoding positions of spatial barcodes
 └── segmentation/             # Cell segmentation results from BSTMatrix
     └── <sample>/
         ├── all_barcode_num.txt      # Spots -> cellbin relationship, obtained when perform spatial mRNA-seq data preprocessing.
@@ -93,12 +93,12 @@ data/BMKS3000/
 **Input file descriptions:**
 - **FASTQ files**: Paired-end sequencing reads. Naming convention: `<sample>_<locus>_R1.fastq.gz` and `<sample>_<locus>_R2.fastq.gz`, where `<locus>` can be `CA`, `RA`, or `TA`.
 - **Image files**: Required for BSTMatrix pipeline
-  - `<sample>_FL.tif`: Fluorescence image (ssDNA)
-  - `<sample>_HE.tif`: H&E stained image
-  - `<sample>_HE.txt`: Image metadata
+  - `<sample>-FL.tif`: Fluorescence image (ssDNA)
+  - `<sample>-HE.tif`: H&E stained image
+  - `<sample>-HE.txt`: Image metadata
 - **Segmentation files**: Generated from BSTMatrix on mRNA data
   - `all_barcode_num.txt`: Maps spots to cell bins
-  - `barcodes_pos.tsv.gz`: Spatial coordinates of barcodes
+  - `barcodes_pos.tsv.gz`: Spatial coordinates of cellbin
 
 ### Configuration Files
 
