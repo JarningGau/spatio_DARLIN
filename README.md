@@ -44,7 +44,7 @@ conda create -n $kernel_name python=3.9 --yes
 conda activate $kernel_name
 conda install snakemake=7.24.0 cutadapt umi_tools --yes
 pip install papermill ipykernel matplotlib tqdm numpy
-pip install "git+https://github.com/JarningGau/darlin-core.git@fe03de6"
+pip install "git+https://github.com/JarningGau/darlin-core.git@1.1.0"
 pip install -e .
 ```
 
