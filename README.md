@@ -48,6 +48,14 @@ pip install "git+https://github.com/JarningGau/darlin-core.git@fe03de6"
 pip install -e .
 ```
 
+### 3. Verify installation
+
+```bash
+conda run -n $kernel_name bash bin/verify_environment.sh
+```
+
+On success the script prints `Analysis environment is ready!`
+
 ### Legacy MATLAB workflow (unmaintained)
 
 The pre-1.0 MATLAB allele-calling path is deprecated and lives under [legacy/matlab/](legacy/matlab/). It requires MATLAB and [Custom_CARLIN](https://github.com/ShouWenWang-Lab/Custom_CARLIN). See [legacy/matlab/README.md](legacy/matlab/README.md).
