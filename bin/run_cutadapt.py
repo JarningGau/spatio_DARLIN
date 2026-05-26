@@ -12,17 +12,17 @@ base_quality = int(sys.argv[6]) if len(sys.argv) > 6 else 0
 primer_len = 15
 
 if templete.startswith('cCARLIN'):
-    CONFIG_AMPLICON = load_carlin_config_by_locus(locus='Col1a1')
-    prime3 = CONFIG_AMPLICON.sequence.primer3
-    prime5 = CONFIG_AMPLICON.sequence.primer5
+    _config = load_carlin_config_by_locus(locus='Col1a1')
+    prime3 = _config.sequence.secondary_sequence + _config.sequence.primer3
+    prime5 = _config.sequence.primer5
 elif templete.startswith('Rosa'):
-    CONFIG_AMPLICON = load_carlin_config_by_locus(locus='Rosa')
-    prime3 = CONFIG_AMPLICON.sequence.primer3
-    prime5 = CONFIG_AMPLICON.sequence.primer5
+    _config = load_carlin_config_by_locus(locus='Rosa')
+    prime3 = _config.sequence.secondary_sequence + _config.sequence.primer3
+    prime5 = _config.sequence.primer5
 elif templete.startswith('Tigre'):
-    CONFIG_AMPLICON = load_carlin_config_by_locus(locus='Tigre')
-    prime3 = CONFIG_AMPLICON.sequence.primer3
-    prime5 = CONFIG_AMPLICON.sequence.primer5
+    _config = load_carlin_config_by_locus(locus='Tigre')
+    prime3 = _config.sequence.secondary_sequence + _config.sequence.primer3
+    prime5 = _config.sequence.primer5
 
 prime3 = prime3[:primer_len] if len(prime3) > primer_len else prime3
 prime5 = prime5[-primer_len:] if len(prime5) > primer_len else prime5
