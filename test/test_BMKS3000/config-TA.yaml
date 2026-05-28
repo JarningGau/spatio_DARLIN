@@ -10,6 +10,8 @@ cutadapt:
 BSTMatrix:
   threads: 8
 QC:
+  ## Step0. Remove reads with low read count per molecule
+  reads_cutoff_per_molecule: 2
   ## Step1. Correct sequencing error (errorous nucleotides)
   LB_error_rate: 0.02
   ## Step2. Remove amplification artifacts (chimeric molecules)
@@ -18,4 +20,4 @@ QC:
   ## (SR) spots with k = reads/UMIs >= this value
   slope_cutoff: 10
   ## (SR+UR+LR) molecules with supported reads >= this value
-  reads_cutoff: 10
+  reads_cutoff_per_spot: 10

@@ -27,9 +27,10 @@ BSTMatrix_threads=config['BSTMatrix']['threads']
 base_quality_cutoff=config['cutadapt']['base_quality_cutoff']
 cutadapt_threads=config['cutadapt']['threads']
 ## QC parameters
+reads_cutoff_per_molecule=config['QC']['reads_cutoff_per_molecule']
 LB_error_rate=config['QC']['LB_error_rate']
 major_fraction_threshold_molecule=config['QC']['major_fraction_threshold_molecule']
-reads_cutoff=config['QC']['reads_cutoff']
+reads_cutoff_per_spot=config['QC']['reads_cutoff_per_spot']
 slope_cutoff=config['QC']['slope_cutoff']
 
 ##################
@@ -107,10 +108,11 @@ rule run_DARLIN_QC:
         "-p darlin_reads {input.r2} "
         "-p umi2gene_file {output.umi2gene} "
         "-p features_file {output.feat} "
+        "-p reads_cutoff_per_molecule {reads_cutoff_per_molecule} "
         "-p LB_error_rate {LB_error_rate} "
         "-p major_fraction_threshold_molecule {major_fraction_threshold_molecule} "
-        "-p reads_cutoff {reads_cutoff} "
         "-p slope_cutoff {slope_cutoff} "
+        "-p reads_cutoff_per_spot {reads_cutoff_per_spot} "
 
 rule call_allele:
     input:
